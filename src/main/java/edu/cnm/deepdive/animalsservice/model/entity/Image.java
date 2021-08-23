@@ -1,9 +1,12 @@
 package edu.cnm.deepdive.animalsservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
 import java.net.URI;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import javax.persistence.Column;
@@ -33,6 +36,11 @@ import org.springframework.stereotype.Component;
         @Index(columnList = "title")
     }
 )
+@JsonIgnoreProperties(
+    value = {"id", "created", "contributor"},
+    allowGetters = true, ignoreUnknown = true
+)
+@JsonPropertyOrder({"id", "href", "created", "name", "description"})
 @Component
 public class Image {
 
@@ -52,10 +60,19 @@ public class Image {
   private Date created;
 
   @NonNull
+  @Column(nullable = false, updatable = false)
+  @JsonIgnore
+  private String path;
+
+  @NonNull
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false)
   private Date updated;
+
+  @NonNull
+  @Column(nullable = false, updatable = false)
+  private String name;
 
   @Column(length = 100)
   private String title;
@@ -63,9 +80,6 @@ public class Image {
   @Column(length = 1024)
   private String description;
 
-  @NonNull
-  @Column(nullable = false, updatable = false)
-  private String name;
 
   @NonNull
   @JsonIgnore
@@ -87,8 +101,26 @@ public class Image {
   }
 
   @NonNull
+  public String getPath() {
+    return path;
+  }
+
+  public void setPath(@NonNull String path) {
+    this.path = path;
+  }
+
+  @NonNull
   public Date getUpdated() {
     return updated;
+  }
+
+  @NonNull
+  public String getName() {
+    return name;
+  }
+
+  public void setName(@NonNull String name) {
+    this.name = name;
   }
 
   public String getTitle() {
@@ -107,14 +139,6 @@ public class Image {
     this.description = description;
   }
 
-  @NonNull
-  public String getName() {
-    return name;
-  }
-
-  public void setName(@NonNull String name) {
-    this.name = name;
-  }
 
   @NonNull
   public String getKey() {
@@ -134,6 +158,18 @@ public class Image {
 
   public void setContentType(@NonNull String contentType) {
     this.contentType = contentType;
+  }
+
+  @Override
+  public int hashCode() {
+    //noinspection ConstantConditions
+    return (id == null) ? 0 : id.hashCode();
+  }
+
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+  @Override
+  public boolean equals(Object obj) {
+    return Objects.equals(this.id, ((Image) obj).id);
   }
 
   public URI getHref() {
