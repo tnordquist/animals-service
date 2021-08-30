@@ -11,10 +11,10 @@ public interface ImageRepository extends JpaRepository<Image, UUID> {
 
   Optional<Image> findFirstById(UUID id);
 
-  Iterable<Image> getAllByOrderByTitleAsc();
+  Streamable<Image> getAllByOrderByTitleAsc();
 
-  Streamable<Image> findAllByNameContainsOrderByNameAsc(String nameFragment);
+  Streamable<Image> findAllByTitleContainsOrderByTitleAsc(String titleFragment);
 
-  Streamable<Image> findAllByDescriptionContainsOrderByNameAsc(String descriptionFragment);
+  Streamable<Image> findAllByDescriptionContainsOrderByTitleAsc(String descriptionFragment);
 
 }

@@ -1,70 +1,73 @@
 package edu.cnm.deepdive.animalsservice.service;
 
+import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration;
+import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.FilenameProperties;
+import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.TimestampProperties;
 import edu.cnm.deepdive.animalsservice.model.dao.ImageRepository;
 import edu.cnm.deepdive.animalsservice.model.entity.Image;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.system.ApplicationHome;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.util.Streamable;
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ImageService {
 
   private final ImageRepository imageRepository;
-  private final ApplicationHome applicationHome;
   private final Random rng;
 
-  @Value("${upload.use-application-home}")
-  private boolean useApplicationHome;
-  @Value("${upload.path}")
-  private String path;
-  @Value("${upload.timestamp.format}")
-  private String timestampFormat;
-  @Value("${upload.timestamp.time-zone}")
-  private String timeZone;
-  @Value("${upload.filename.unknown}")
-  private String unknownFilename;
-  @Value("${upload.filename.format}")
-  private String filenameFormat;
-  @Value("${upload.filename.randomizer-limit}")
-  private int randomizerLimit;
+  private final Path uploadDirectory;
+  private final Set<String> contentTypes;
+  private final DateFormat formatter;
+  private final String unknownFilename;
+  private final String filenameFormat;
+  private final int randomizerLimit;
 
-  private Path uploadDirectory;
-  private DateFormat formatter;
-
+  @Autowired
   public ImageService(
-      ImageRepository imageRepository,
+      ImageRepository imageRepository, UploadConfiguration uploadConfiguration,
       ApplicationHome applicationHome, Random rng) {
     this.imageRepository = imageRepository;
-    this.applicationHome = applicationHome;
     this.rng = rng;
+    FilenameProperties filenameProperties = uploadConfiguration.getFilename();
+    TimestampProperties timestampProperties = filenameProperties.getTimestamp();
+    String uploadPath = uploadConfiguration.getPath();
+    uploadDirectory = (uploadConfiguration.isApplicationHome())
+        ? applicationHome.getDir().toPath().resolve(uploadPath)
+        : Path.of(uploadPath);
+    contentTypes = new HashSet<>(uploadConfiguration.getContentTypes());
+    unknownFilename = filenameProperties.getUnknown();
+    filenameFormat = filenameProperties.getFormat();
+    randomizerLimit = filenameProperties.getRandomizerLimit();
+    formatter = new SimpleDateFormat(timestampProperties.getFormat());
+    formatter.setTimeZone(TimeZone.getTimeZone(timestampProperties.getTimeZone()));
   }
 
   @PostConstruct
   private void initUploads() {
-    if (useApplicationHome) {
-      uploadDirectory = applicationHome.getDir().toPath().resolve(path);
-    } else {
-      uploadDirectory = Path.of(path);
-    }
     //noinspection ResultOfMethodCallIgnored
     uploadDirectory.toFile().mkdirs();
-    formatter = new SimpleDateFormat(timestampFormat);
-    formatter.setTimeZone(TimeZone.getTimeZone(timeZone));
   }
 
 
@@ -88,6 +91,10 @@ public class ImageService {
   }
 
   public Image save(MultipartFile file) {
+    if (!contentTypes.contains(file.getContentType())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Unsupported MIME type in uploaded content.");
+    }
     try {
       String originalFileName = file.getOriginalFilename();
       if (originalFileName == null) {
@@ -99,6 +106,7 @@ public class ImageService {
       Image image = new Image();
       image.setName(new File(originalFileName).getName());
       image.setPath(newFileName);
+      //noinspection ConstantConditions
       image.setContentType(file.getContentType());
       return imageRepository.save(image);
     } catch (IOException e) {
@@ -121,19 +129,28 @@ public class ImageService {
     return imageRepository.getAllByOrderByTitleAsc();
   }
 
-  public Iterable<Image> search(String fragment) {
-    Iterable<Image> images;
+  public Streamable<Image> search(String fragment) {
+    Streamable<Image> images;
     if (fragment != null) {
-      images = imageRepository.findAllByNameContainsOrderByNameAsc(fragment)
-          .and(imageRepository.findAllByDescriptionContainsOrderByNameAsc(fragment))
-          .stream()
-          .distinct()
-          .collect(Collectors.toList());
+      images = Streamable.of(
+          imageRepository
+              .findAllByTitleContainsOrderByTitleAsc(fragment)
+              .and(imageRepository.findAllByDescriptionContainsOrderByTitleAsc(fragment))
+              .toSet()
+      );
     } else {
       images = imageRepository.getAllByOrderByTitleAsc();
     }
     return images;
   }
 
+  public Optional<Resource> getContent(Image image) {
+    try {
+      Path file = uploadDirectory.resolve(image.getPath());
+      return Optional.of(new UrlResource(file.toUri()));
+    } catch (MalformedURLException e) {
+      return Optional.empty();
+    }
+  }
 }
 
