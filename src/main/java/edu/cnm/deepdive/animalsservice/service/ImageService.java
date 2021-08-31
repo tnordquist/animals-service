@@ -5,6 +5,7 @@ import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.Filenam
 import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.TimestampProperties;
 import edu.cnm.deepdive.animalsservice.model.dao.ImageRepository;
 import edu.cnm.deepdive.animalsservice.model.entity.Image;
+import edu.cnm.deepdive.animalsservice.service.StorageService.FilenameTranslation;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -35,39 +36,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class ImageService {
 
   private final ImageRepository imageRepository;
-  private final Random rng;
-
-  private final Path uploadDirectory;
-  private final Set<String> contentTypes;
-  private final DateFormat formatter;
-  private final String unknownFilename;
-  private final String filenameFormat;
-  private final int randomizerLimit;
+  private final StorageService storageService;
 
   @Autowired
   public ImageService(
-      ImageRepository imageRepository, UploadConfiguration uploadConfiguration,
-      ApplicationHome applicationHome, Random rng) {
+      ImageRepository imageRepository, StorageService storageService) {
     this.imageRepository = imageRepository;
-    this.rng = rng;
-    FilenameProperties filenameProperties = uploadConfiguration.getFilename();
-    TimestampProperties timestampProperties = filenameProperties.getTimestamp();
-    String uploadPath = uploadConfiguration.getPath();
-    uploadDirectory = (uploadConfiguration.isApplicationHome())
-        ? applicationHome.getDir().toPath().resolve(uploadPath)
-        : Path.of(uploadPath);
-    contentTypes = new HashSet<>(uploadConfiguration.getContentTypes());
-    unknownFilename = filenameProperties.getUnknown();
-    filenameFormat = filenameProperties.getFormat();
-    randomizerLimit = filenameProperties.getRandomizerLimit();
-    formatter = new SimpleDateFormat(timestampProperties.getFormat());
-    formatter.setTimeZone(TimeZone.getTimeZone(timestampProperties.getTimeZone()));
-  }
-
-  @PostConstruct
-  private void initUploads() {
-    //noinspection ResultOfMethodCallIgnored
-    uploadDirectory.toFile().mkdirs();
+    this.storageService = storageService;
   }
 
 
@@ -90,34 +65,17 @@ public class ImageService {
     return imageRepository.save(image);
   }
 
-  public Image save(MultipartFile file) {
-    if (!contentTypes.contains(file.getContentType())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Unsupported MIME type in uploaded content.");
-    }
-    try {
-      String originalFileName = file.getOriginalFilename();
-      if (originalFileName == null) {
-        originalFileName = unknownFilename;
-      }
-      String newFileName = String.format(filenameFormat, formatter.format(new Date()),
-          rng.nextInt(randomizerLimit), getExtension(originalFileName));
-      Files.copy(file.getInputStream(), uploadDirectory.resolve(newFileName));
-      Image image = new Image();
-      image.setName(new File(originalFileName).getName());
-      image.setPath(newFileName);
-      //noinspection ConstantConditions
-      image.setContentType(file.getContentType());
-      return imageRepository.save(image);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public Image store(MultipartFile file) throws IOException {
+    FilenameTranslation translation = storageService.store(file);
+    Image image = new Image();
+    image.setName(translation.getOriginalFilename());
+    image.setPath(translation.getNewFilename());
+    image.setContentType(file.getContentType());
+    return imageRepository.save(image);
   }
 
-  @NonNull
-  private String getExtension(@NonNull String filename) {
-    int position;
-    return ((position = filename.lastIndexOf('.')) >= 0) ? filename.substring(position + 1) : "";
+  public Resource retrieve(Image image) throws MalformedURLException {
+    return storageService.retrieve(image.getPath());
   }
 
   /**
@@ -144,13 +102,5 @@ public class ImageService {
     return images;
   }
 
-  public Optional<Resource> getContent(Image image) {
-    try {
-      Path file = uploadDirectory.resolve(image.getPath());
-      return Optional.of(new UrlResource(file.toUri()));
-    } catch (MalformedURLException e) {
-      return Optional.empty();
-    }
-  }
 }
 

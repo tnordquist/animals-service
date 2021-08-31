@@ -18,6 +18,8 @@ package edu.cnm.deepdive.animalsservice.controller;
 import edu.cnm.deepdive.animalsservice.exception.NotFoundException;
 import edu.cnm.deepdive.animalsservice.model.entity.Image;
 import edu.cnm.deepdive.animalsservice.service.ImageService;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -51,6 +53,8 @@ public class ImageController {
       UUID_PARAMETER_PATTERN + "/description";
   private static final String CONTENT_PROPERTY_PATTERN =
       ParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/content";
+  public static final String NOT_RETRIEVED_MESSAGE = "Unable to retrieve previously uploaded file";
+  private static final String NOT_STORED_MESSAGE = "Unable to store uploaded content";
 
   private final ImageService imageService;
 
@@ -61,8 +65,13 @@ public class ImageController {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Image> post(@RequestParam MultipartFile file) {
-    Image image = imageService.save(file);
-    return ResponseEntity.created(image.getHref()).body(image);
+    try {
+      Image image = imageService.store(file);
+      return ResponseEntity.created(image.getHref()).body(image);
+    } catch (IOException e) {
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, NOT_STORED_MESSAGE, e);
+    }
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE, value = ParameterPatterns.UUID_PATH_PARAMETER_PATTERN)
@@ -78,14 +87,9 @@ public class ImageController {
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-  public Iterable<Image> getImages() {
-    return imageService.list();
+  public Iterable<Image> search(@RequestParam(value = "q", required = false) String fragment) {
+    return imageService.search(fragment).toList();
   }
-
-//  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-//  public Iterable<Image> search(@RequestParam(value = "q", required = false) String fragment) {
-//    return imageService.search(fragment);
-//  }
 
   @GetMapping(value = DESCRIPTION_PROPERTY_PATTERN, produces = {
       MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE})
@@ -110,12 +114,17 @@ public class ImageController {
   @GetMapping(value = CONTENT_PROPERTY_PATTERN)
   public ResponseEntity<Resource> getContent(@PathVariable UUID id) {
     return imageService.get(id)
-        .flatMap((image) -> imageService.getContent(image)
-            .map((resource) -> ResponseEntity.ok()
+        .map((image) -> {
+          try {
+            return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, dispositionHeader(image.getName()))
                 .header(HttpHeaders.CONTENT_TYPE, image.getContentType())
-                .body(resource))
-        )
+                .body(imageService.retrieve(image));
+          } catch (MalformedURLException e) {
+            throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, NOT_RETRIEVED_MESSAGE, e);
+          }
+        })
         .orElseThrow(this::imageNotFound);
   }
 

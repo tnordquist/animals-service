@@ -17,6 +17,8 @@ package edu.cnm.deepdive.animalsservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
 import java.net.URI;
@@ -51,6 +53,7 @@ import org.springframework.stereotype.Component;
         @Index(columnList = "title")
     }
 )
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(
     value = {"id", "created", "contributor"},
     allowGetters = true, ignoreUnknown = true
