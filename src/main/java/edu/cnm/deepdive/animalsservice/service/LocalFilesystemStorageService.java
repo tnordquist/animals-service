@@ -2,25 +2,32 @@ package edu.cnm.deepdive.animalsservice.service;
 
 import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration;
 import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.FilenameProperties;
-import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.TimestampProperties;
+import edu.cnm.deepdive.animalsservice.configuration.UploadConfiguration.FilenameProperties.TimestampProperties;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.PostConstruct;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -28,27 +35,35 @@ public class LocalFilesystemStorageService implements StorageService {
 
   private final Random rng;
   private final Path uploadDirectory;
-  private final Set<String> contentTypes;
+  private final Pattern subdirectoryPattern;
+  private final Set<String> whitelist;
   private final DateFormat formatter;
-  private final String unknownFilename;
   private final String filenameFormat;
   private final int randomizerLimit;
+  private final List<MediaType> contentTypes;
+
+  private static final String REFERENCE_PATH_DELIMITER = "/";
+  private static final String REFERENCE_PATH_FORMAT = "%s" + REFERENCE_PATH_DELIMITER + "%s";
 
   public LocalFilesystemStorageService(
       Random rng, UploadConfiguration uploadConfiguration, ApplicationHome applicationHome) {
     this.rng = rng;
     FilenameProperties filenameProperties = uploadConfiguration.getFilename();
     TimestampProperties timestampProperties = filenameProperties.getTimestamp();
-    String uploadPath = uploadConfiguration.getPath();
+    String uploadPath = uploadConfiguration.getDirectory();
     uploadDirectory = uploadConfiguration.isApplicationHome()
         ? applicationHome.getDir().toPath().resolve(uploadPath)
         : Path.of(uploadPath);
-    contentTypes = new HashSet<>(uploadConfiguration.getContentTypes());
-    unknownFilename = filenameProperties.getUnknown();
+    uploadDirectory.toFile().mkdirs();
+    subdirectoryPattern = uploadConfiguration.getSubdirectoryPattern();
+    whitelist = uploadConfiguration.getWhitelist();
+    contentTypes = whitelist.stream()
+        .map(MediaType::valueOf)
+        .collect(Collectors.toList());
     filenameFormat = filenameProperties.getFormat();
     randomizerLimit = filenameProperties.getRandomizerLimit();
     formatter = new SimpleDateFormat(timestampProperties.getFormat());
-    formatter.setTimeZone(TimeZone.getTimeZone(timestampProperties.getTimeZone()));
+    formatter.setTimeZone(timestampProperties.getTimeZone());
   }
 
   @PostConstruct
@@ -58,35 +73,55 @@ public class LocalFilesystemStorageService implements StorageService {
   }
 
   @Override
-  public FilenameTranslation store(MultipartFile file)
-      throws IOException, ForbiddenMimeTypeException {
-    if (!contentTypes.contains(file.getContentType())) {
-      throw new ForbiddenMimeTypeException();
+  public String store(MultipartFile file)
+      throws IOException, HttpMediaTypeNotAcceptableException {
+    if (!whitelist.contains(file.getContentType())) {
+      throw new HttpMediaTypeNotAcceptableException(contentTypes);
     }
-    try {
-      String originalFilename = file.getOriginalFilename();
-      if (originalFilename == null) {
-        originalFilename = unknownFilename;
-      }
-      originalFilename = new File(originalFilename).getName();
-      String newFilename = String.format(filenameFormat, formatter.format(new Date()),
-          rng.nextInt(randomizerLimit), getExtension(originalFilename));
-      Files.copy(file.getInputStream(), uploadDirectory.resolve(newFilename));
-      return new FilenameTranslation(originalFilename, newFilename);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    String originalFilename = file.getOriginalFilename();
+    String newFileName = String.format(filenameFormat,
+        formatter.format(new Date()), rng.nextInt(randomizerLimit),
+        getExtension(originalFilename != null ? originalFilename : ""));
+    String subdirectory = getSubdirectory(newFileName);
+    Path resolvePath = uploadDirectory.resolve(subdirectory);
+    resolvePath.toFile().mkdirs();
+    Files.copy(file.getInputStream(), resolvePath.resolve(newFileName));
+    return String.format(REFERENCE_PATH_FORMAT, subdirectory, newFileName);
   }
 
   @Override
-  public Resource retrieve(String filename) throws MalformedURLException {
-    Path file = uploadDirectory.resolve(filename);
+  public Resource retrieve(String reference) throws IOException {
+    Path file = uploadDirectory.resolve(reference);
     return new UrlResource(file.toUri());
+  }
+
+  @Override
+  public boolean delete(String reference)
+      throws IOException, UnsupportedOperationException, SecurityException {
+    try {
+      File file = uploadDirectory.resolve(reference).toFile();
+      return file.delete();
+    } catch (InvalidPathException e) {
+      throw new IOException(e);
+    }
   }
 
   @NonNull
   private String getExtension(@NonNull String filename) {
     int position;
     return ((position = filename.lastIndexOf('.')) >= 0) ? filename.substring(position + 1) : "";
+  }
+
+  private String getSubdirectory(@NonNull String filename) {
+    String path;
+    Matcher matcher = subdirectoryPattern.matcher(filename);
+    if (matcher.matches()) {
+      path = IntStream.rangeClosed(1, matcher.groupCount())
+          .mapToObj(matcher::group)
+          .collect(Collectors.joining(REFERENCE_PATH_DELIMITER));
+    } else {
+      path = "";
+    }
+    return path;
   }
 }
