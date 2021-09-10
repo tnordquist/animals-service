@@ -112,9 +112,7 @@ public class ImageService {
               .and(imageRepository.findAllByDescriptionContainsOrderByTitleAsc(fragment))
               .toSet()
       );
-    } else {
-      images = imageRepository.getAllByOrderByTitleAsc();
-    }
+    } else images = imageRepository.findAllByOrderByTitleAsc();
     return images;
   }
 

@@ -88,10 +88,15 @@ public class ImageController {
     }
   }
 
-  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE, value = ParameterPatterns.UUID_PATH_PARAMETER_PATTERN)
+  @GetMapping(value = UUID_PARAMETER_PATTERN, produces = MediaType.APPLICATION_JSON_VALUE)
   public Image get(@PathVariable UUID id) {
     return imageService.get(id)
         .orElseThrow(this::imageNotFound);
+  }
+
+  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+  public Iterable<Image> list() {
+    return imageService.list();
   }
 
   @DeleteMapping(value = BaseParameterPatterns.UUID_PATH_PARAMETER_PATTERN)
@@ -113,10 +118,10 @@ public class ImageController {
         );
   }
 
-  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-  public Iterable<Image> search(@RequestParam(value = "q", required = false) String fragment) {
-    return imageService.search(fragment).toList();
-  }
+//  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+//  public Iterable<Image> search(@RequestParam(value = "q", required = false) String fragment) {
+//    return imageService.search(fragment).toList();
+//  }
 
   @GetMapping(value = DESCRIPTION_PROPERTY_PATTERN, produces = {
       MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE})
