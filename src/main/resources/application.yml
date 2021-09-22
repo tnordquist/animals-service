@@ -21,9 +21,10 @@ spring:
 #              action: create
 #              create-target: ddl.sql
 server:
+  forward-headers-strategy: native
   port: 1861
   servlet:
-    context-path: /animal
+    context-path: /animals
 
 upload:
   applicationHome: true
@@ -36,6 +37,7 @@ upload:
     - image/pjpeg
     - image/png
     - image/tiff
+    - image/heic
   filename:
     format: "%1$s-%2$d.%3$s"
     randomizerLimit: 1000000
