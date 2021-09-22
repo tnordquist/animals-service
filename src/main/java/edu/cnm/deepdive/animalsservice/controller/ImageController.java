@@ -15,23 +15,22 @@
  */
 package edu.cnm.deepdive.animalsservice.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.cnm.deepdive.animalsservice.exception.NotFoundException;
 import edu.cnm.deepdive.animalsservice.model.entity.Image;
 import edu.cnm.deepdive.animalsservice.service.ImageService;
 import edu.cnm.deepdive.animalsservice.service.ImageService.ImageNotFoundException;
+import edu.cnm.deepdive.animalsservice.view.ImageView;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import org.springframework.core.io.Resource;
 import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.HttpMediaTypeException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,15 +63,19 @@ public class ImageController {
   private static final String FILE_STORE_FAILURE_MESSAGE = "File store error";
 
   private final ImageService imageService;
+  private final ObjectMapper mapper;
 
 
-  public ImageController(ImageService imageService) {
+  public ImageController(ImageService imageService,
+      ObjectMapper mapper) {
     this.imageService = imageService;
+    this.mapper = mapper;
   }
 
+  @JsonView(ImageView.Full.class)
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Image> post(
-      @RequestParam(required = false) String title,
+      @RequestParam String title,
       @RequestParam(required = false) String description,
       @RequestParam MultipartFile file) {
     try {
@@ -88,12 +91,14 @@ public class ImageController {
     }
   }
 
+  @JsonView(ImageView.Full.class)
   @GetMapping(value = UUID_PARAMETER_PATTERN, produces = MediaType.APPLICATION_JSON_VALUE)
   public Image get(@PathVariable UUID id) {
     return imageService.get(id)
         .orElseThrow(this::imageNotFound);
   }
 
+  @JsonView(ImageView.Partial.class)
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   public Iterable<Image> list() {
     return imageService.list();
@@ -124,20 +129,21 @@ public class ImageController {
 //  }
 
   @GetMapping(value = DESCRIPTION_PROPERTY_PATTERN, produces = {
-      MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE})
+      MediaType.APPLICATION_JSON_VALUE})
   public String getDescription(@PathVariable UUID id) {
     return imageService.get(id)
         .map(Image::getDescription)
         .orElseThrow(NotFoundException::new);
   }
 
-  @PutMapping(value = DESCRIPTION_PROPERTY_PATTERN, consumes = {MediaType.APPLICATION_JSON_VALUE,
-      MediaType.TEXT_PLAIN_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE,
-      MediaType.TEXT_PLAIN_VALUE})
-  public String putDescription(@PathVariable UUID id, @RequestBody String description) {
+  @PutMapping(value = DESCRIPTION_PROPERTY_PATTERN, consumes = {
+      MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+  public String putDescription(@PathVariable UUID id, @RequestBody String description)
+      throws JsonProcessingException {
+    String fixedDescription = mapper.readValue(description, String.class);
     return imageService.get(id)
         .map((image) -> {
-          image.setDescription(description);
+          image.setDescription(fixedDescription);
           return imageService.save(image).getDescription();
         })
         .orElseThrow(this::imageNotFound);

@@ -11,7 +11,7 @@
   </parent>
   <groupId>edu.cnm.deepdive</groupId>
   <artifactId>animals-service</artifactId>
-  <version>0.0.2-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>animals-service</name>
   <description>animals-service</description>
   <properties>

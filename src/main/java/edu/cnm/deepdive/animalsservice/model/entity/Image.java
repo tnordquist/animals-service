@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
+import edu.cnm.deepdive.animalsservice.view.ImageView;
 import java.net.URI;
 import java.util.Date;
 import java.util.Objects;
@@ -59,6 +60,7 @@ import org.springframework.stereotype.Component;
     allowGetters = true, ignoreUnknown = true
 )
 @JsonPropertyOrder({"id", "href", "created", "name", "description"})
+@JsonView(ImageView.Partial.class)
 @Component
 public class Image {
 
@@ -89,15 +91,19 @@ public class Image {
   private Date updated;
 
   @NonNull
+  @JsonIgnore
   @Column(nullable = false, updatable = false)
   private String name;
+
 
   @Column(length = 100)
   private String title;
 
+  @JsonView(ImageView.Full.class)
   @Column(length = 1024)
   private String description;
 
+  @JsonView(ImageView.Full.class)
   @NonNull
   @Column(nullable = false, updatable = false)
   private String contentType;
