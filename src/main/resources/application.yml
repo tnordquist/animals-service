@@ -1,3 +1,5 @@
+#TODO: Split into service, DDL, and preload profiles.
+#TODO: Use H2 instead of Derby.
 spring:
   servlet:
     multipart:

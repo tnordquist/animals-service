@@ -34,6 +34,7 @@ build/
 
 ### Database-related files ###
 derby.log
+#TODO Correct path for ignoring database.
 /-db/
 
 .floo*
