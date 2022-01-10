@@ -123,11 +123,6 @@ public class ImageController {
         );
   }
 
-//  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-//  public Iterable<Image> search(@RequestParam(value = "q", required = false) String fragment) {
-//    return imageService.search(fragment).toList();
-//  }
-
   @GetMapping(value = DESCRIPTION_PROPERTY_PATTERN, produces = {
       MediaType.APPLICATION_JSON_VALUE})
   public String getDescription(@PathVariable UUID id) {

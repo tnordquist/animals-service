@@ -68,10 +68,8 @@ public class Image {
 
   @NonNull
   @Id
-  @GeneratedValue(generator = "uuid2")
-  @GenericGenerator(name = "uuid2", strategy = "uuid2")
-  // TODO Modify/simplify for H2.
-  @Column(name = "image_id", nullable = false, updatable = false, columnDefinition = "CHAR(16) FOR BIT DATA")
+  @GeneratedValue
+  @Column(name = "image_id", updatable = false, columnDefinition = "UUID")
   private UUID id;
 
   // TODO Add an externalKey field for "public" UUID.

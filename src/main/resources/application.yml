@@ -1,5 +1,4 @@
 #TODO: Split into service, DDL, and preload profiles.
-#TODO: Use H2 instead of Derby.
 spring:
   servlet:
     multipart:
@@ -9,9 +8,9 @@ spring:
   profiles:
     active: service
   datasource:
-    url: jdbc:derby:animals_db;create=true;collation=TERRITORY_BASED:PRIMARY
+    url: jdbc:h2:file:./db/animals_db
   jpa:
-    database-platform: org.hibernate.dialect.DerbyTenSevenDialect
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
 #    properties:
@@ -23,6 +22,8 @@ spring:
 #              action: create
 #              create-target: ddl.sql
 server:
+  error:
+    include-message: always
   forward-headers-strategy: native
   port: 1861
   servlet:
