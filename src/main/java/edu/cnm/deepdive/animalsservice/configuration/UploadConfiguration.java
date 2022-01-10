@@ -223,14 +223,14 @@ public class UploadConfiguration {
     public static class TimestampProperties {
 
       /**
-       * Format string (passed to {@link java.text.SimpleDateFormat#SimpleDateFormat(String)} used
+       * Format string (passed to {@link java.text.SimpleDateFormat#SimpleDateFormat(String)}) used
        * to format timestamps in generated filenames.
        */
       private String format = "yyyyMMddHHmmssSSS";
       private TimeZone timeZone = TimeZone.getTimeZone("UTC");
 
       /**
-       * Returns the format string (passed to {@link java.text.SimpleDateFormat#SimpleDateFormat(String)}
+       * Returns the format string (passed to {@link java.text.SimpleDateFormat#SimpleDateFormat(String)})
        * used to format timestamps in generated filenames.
        */
       public String getFormat() {
@@ -238,7 +238,7 @@ public class UploadConfiguration {
       }
 
       /**
-       * Sets the format string (passed to {@link java.text.SimpleDateFormat#SimpleDateFormat(String)}
+       * Sets the format string (passed to {@link java.text.SimpleDateFormat#SimpleDateFormat(String)})
        * used to format timestamps in generated filenames.
        */
       public void setFormat(String format) {

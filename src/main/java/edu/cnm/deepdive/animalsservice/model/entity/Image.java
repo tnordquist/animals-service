@@ -55,7 +55,7 @@ import org.springframework.stereotype.Component;
     }
 )
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties(
+@JsonIgnoreProperties( // TODO Replace with individual @JsonProperty annotations on fields.
     value = {"id", "created", "contributor"},
     allowGetters = true, ignoreUnknown = true
 )
@@ -70,9 +70,11 @@ public class Image {
   @Id
   @GeneratedValue(generator = "uuid2")
   @GenericGenerator(name = "uuid2", strategy = "uuid2")
+  // TODO Modify/simplify for H2.
   @Column(name = "image_id", nullable = false, updatable = false, columnDefinition = "CHAR(16) FOR BIT DATA")
   private UUID id;
 
+  // TODO Add an externalKey field for "public" UUID.
   @NonNull
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
