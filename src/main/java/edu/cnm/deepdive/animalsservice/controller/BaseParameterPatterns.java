@@ -24,6 +24,6 @@ public class BaseParameterPatterns {
   public static final String UUID_PATTERN =
       "\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{12}";
   /** Path component for an {@code {id}} placeholder constrained to the{@link #UUID_PATTERN}. */
-  public static final String UUID_PATH_PARAMETER_PATTERN = "/{id:" + UUID_PATTERN +  "}";
+  public static final String UUID_PATH_PARAMETER_PATTERN = "/{externalKey:" + UUID_PATTERN +  "}";
 
 }

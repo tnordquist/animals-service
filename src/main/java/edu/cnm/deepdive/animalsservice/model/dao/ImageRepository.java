@@ -9,6 +9,8 @@ import org.springframework.expression.spel.ast.OpAnd;
 
 public interface ImageRepository extends JpaRepository<Image, UUID> {
 
+  Optional<Image> findByExternalKey(UUID key);
+
   Optional<Image> findFirstById(UUID id);
 
   Iterable<Image> getAllByOrderByTitleAsc();

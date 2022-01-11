@@ -15,12 +15,8 @@
  */
 package edu.cnm.deepdive.animalsservice.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonView;
 import edu.cnm.deepdive.animalsservice.view.ImageView;
 import java.net.URI;
 import java.util.Date;
@@ -70,16 +66,20 @@ public class Image {
   @Id
   @GeneratedValue
   @Column(name = "image_id", updatable = false, columnDefinition = "UUID")
+  @JsonIgnore
   private UUID id;
 
-  // TODO Add an externalKey field for "public" UUID.
+  @NonNull
+  @Column(nullable = false, updatable = false, columnDefinition = "UUID", unique = true)
+  @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
+  private UUID externalKey = UUID.randomUUID();
+
   @NonNull
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false, updatable = false)
   private Date created;
 
-  @NonNull
   @Column(nullable = false, updatable = false)
   @JsonIgnore
   private String path;
@@ -111,6 +111,11 @@ public class Image {
   @NonNull
   public UUID getId() {
     return id;
+  }
+
+  @NonNull
+  public UUID getExternalKey() {
+    return externalKey;
   }
 
   @NonNull

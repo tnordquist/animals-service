@@ -35,7 +35,7 @@ public class ImageService {
     this.storageService = storageService;
   }
 
-
+// TODO If appropriate, remove this method
   /**
    * Selects and returns a {@link Image} with the specified {@code id}, as the content of an {@link
    * Optional Optional&lt;Image&gt;}. If no such instance exists, the {@link Optional} is empty.
@@ -43,8 +43,19 @@ public class ImageService {
    * @param id Unique identifier of the {@link Image}.
    * @return {@link Optional Optional&lt;Image&gt;} containing the selected image.
    */
-  public Optional<Image> get(@NonNull UUID id) {
-    return imageRepository.findById(id);
+//  public Optional<Image> get(@NonNull UUID id) {
+//    return imageRepository.findById(id);
+//  }
+
+  /**
+   * Selects and returns a {@link Image} with the specified {@code key}, as the content of an {@link
+   * Optional Optional&lt;Image&gt;}. If no such instance exists, the {@link Optional} is empty.
+   *
+   * @param key Unique identifier of the {@link Image}.
+   * @return {@link Optional Optional&lt;Image&gt;} containing the selected image.
+   */
+  public Optional<Image> get(UUID key) {
+    return imageRepository.findByExternalKey(key);
   }
 
   /**
