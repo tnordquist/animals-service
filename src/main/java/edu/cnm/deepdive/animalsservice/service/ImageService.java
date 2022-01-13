@@ -35,7 +35,7 @@ public class ImageService {
     this.storageService = storageService;
   }
 
-// TODO If appropriate, remove this method
+// TODO If appropriate, remove this method in lieu of external key
   /**
    * Selects and returns a {@link Image} with the specified {@code id}, as the content of an {@link
    * Optional Optional&lt;Image&gt;}. If no such instance exists, the {@link Optional} is empty.

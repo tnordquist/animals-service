@@ -77,9 +77,10 @@ public class ImageController {
     @JsonView(ImageView.Full.class)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Image> post(
+            @RequestParam MultipartFile file,
             @RequestParam String title,
-            @RequestParam(required = false) String description,
-            @RequestParam MultipartFile file) {
+            @RequestParam(required = false) String description
+            ) {
         try {
             Image image = imageService.store(file, title, description);
 
