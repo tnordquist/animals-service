@@ -16,11 +16,17 @@
 package edu.cnm.deepdive.animalsservice.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.cnm.deepdive.animalsservice.exception.NotFoundException;
 import edu.cnm.deepdive.animalsservice.model.entity.Image;
 import edu.cnm.deepdive.animalsservice.service.ImageService;
 import edu.cnm.deepdive.animalsservice.service.ImageService.ImageNotFoundException;
 import edu.cnm.deepdive.animalsservice.view.ImageView;
+
+import java.io.IOException;
+import java.util.UUID;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.hateoas.server.ExposesResourceFor;
@@ -29,12 +35,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.io.IOException;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/images")
@@ -45,7 +57,7 @@ public class ImageController {
     public static final String ATTACHMENT_DISPOSITION_FORMAT = "attachment; filename=\"%s\"";
     public static final String IMAGE_NOT_FOUND_REASON = "Image not found";
     public static final String NOT_RETRIEVED_MESSAGE = "Unable to retrieve previously uploaded file";
-    private static final String UUID_PARAMETER_PATTERN = "/{externalKey:[0-9a-fA-F\\\\-]{32,36}}";
+    private static final String UUID_PARAMETER_PATTERN = "/{externalKey:[0-9a-fA-F\\-]{32,36}}";
     private static final String DESCRIPTION_PROPERTY_PATTERN =
             UUID_PARAMETER_PATTERN + "/description";
     private static final String CONTENT_PROPERTY_PATTERN =
@@ -55,10 +67,13 @@ public class ImageController {
     private static final String FILE_STORE_FAILURE_MESSAGE = "File store error";
 
     private final ImageService imageService;
+    private final ObjectMapper mapper;
 
 
-    public ImageController(ImageService imageService) {
+    public ImageController(ImageService imageService,
+                           ObjectMapper mapper) {
         this.imageService = imageService;
+        this.mapper = mapper;
     }
 
     @JsonView(ImageView.Full.class)
@@ -67,7 +82,7 @@ public class ImageController {
             @RequestParam MultipartFile file,
             @RequestParam String title,
             @RequestParam(required = false) String description
-            ) {
+    ) {
         try {
             Image image = imageService.store(file, title, description);
 
@@ -124,9 +139,17 @@ public class ImageController {
 
     @PutMapping(value = DESCRIPTION_PROPERTY_PATTERN, consumes = {
             MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public String putDescription(@PathVariable UUID externalKey, @RequestBody String description) {
-        return imageService.updateDescription(externalKey, description)
-                .map(Image::getDescription)
+    public String putDescription(@PathVariable UUID externalKey, @RequestBody String description)
+            throws JsonProcessingException {
+        String fixedDescription = mapper.readValue(description, String.class);
+        return imageService.updateDescription(externalKey, fixedDescription)
+                .map((newDescrition) -> {
+                    try {
+                        return mapper.writeValueAsString(newDescrition);
+                    } catch (JsonProcessingException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                })
                 .orElseThrow(this::imageNotFound);
     }
 
