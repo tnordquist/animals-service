@@ -51,10 +51,6 @@ import org.springframework.stereotype.Component;
     }
 )
 @JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties( // TODO Replace with individual @JsonProperty annotations on fields.
-    value = {"id", "created", "contributor"},
-    allowGetters = true, ignoreUnknown = true
-)
 @JsonPropertyOrder({"id", "href", "created", "name", "description"})
 @JsonView(ImageView.Partial.class)
 @Component
@@ -78,6 +74,7 @@ public class Image {
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false, updatable = false)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Date created;
 
   @Column(nullable = false, updatable = false)
@@ -88,6 +85,7 @@ public class Image {
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Date updated;
 
   @NonNull
