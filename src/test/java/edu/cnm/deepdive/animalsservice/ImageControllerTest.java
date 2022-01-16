@@ -1,7 +1,6 @@
-package edu.cnm.deepdive.animalsservice.controller;
+package edu.cnm.deepdive.animalsservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.cnm.deepdive.animalsservice.AnimalsServiceApplication;
 import edu.cnm.deepdive.animalsservice.service.ImageService;
 import edu.cnm.deepdive.animalsservice.service.LocalFilesystemStorageService;
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.RestDocumentationContextProvider;
@@ -20,17 +20,24 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.hamcrest.core.Is.is;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
 @SpringBootTest(classes = AnimalsServiceApplication.class)
 class ImageControllerTest {
 
-    private final ObjectMapper objectMapper;
     private final ImageService imageService;
+    private final ObjectMapper objectMapper;
+
+    @MockBean
     private final LocalFilesystemStorageService localFileService;
 
     @Autowired
@@ -83,14 +90,30 @@ class ImageControllerTest {
         MockMultipartFile file
                 = new MockMultipartFile(
                 "file",
-                "AnimalName.txt",
-                MediaType.TEXT_PLAIN_VALUE,
+                "AnimalName.jpeg",
+                MediaType.APPLICATION_JSON_VALUE,
                 "Some sort of animal".getBytes()
         );
-        MockMvc mockMvc
-                = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/images").file(file))
-                .andExpect(status().isOk());
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("title", "AnimalName");
+        mockMvc.perform(
+                        post("/{contextPathPart}/images", contextPathPart)
+                                .contextPath(contextPath)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(payload))
+//        mockMvc.perform(multipart("/{contextPathPart}/images").file(file))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.title", is("AnimalName")))
+                .andDo(
+                        document(
+                                "code/post-valid",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint())
+                        )
+                );
+
     }
 
     @Test
