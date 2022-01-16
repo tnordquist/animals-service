@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
  *   of a service implementing this interface need not be concerned with filename collisions.</li>
  * </ul>
  */
+@Service
 @Profile("service")
 public interface StorageService {
 

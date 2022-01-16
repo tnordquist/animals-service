@@ -84,6 +84,7 @@
                         </configuration>
                     </execution>
                 </executions>
+<!--
                 <dependencies>
                     <dependency>
                         <groupId>org.springframework.restdocs</groupId>
@@ -91,6 +92,7 @@
                         <version>${spring-restdocs.version}</version>
                     </dependency>
                 </dependencies>
+-->
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

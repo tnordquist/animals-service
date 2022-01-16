@@ -1,0 +1,70 @@
+= Animals API Guide
+Todd Nordquist <toddnordquist144@gmail.com>
+v{projectVersion}
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+:sectlinks:
+
+== Service endpoints
+
+[[post_image_endpoint]]
+=== Create image
+
+==== Request
+
+`POST /images`
+
+TODO write description here
+
+===== Body
+
+|===
+|Type|Description
+
+|<<image_post_schema,`Image`>>
+|Image data and parameters
+
+|===
+
+==== Responses
+
+|===
+|Status|Body|Description
+
+|201 Created
+|<<image_schema, `Image`>>
+|Image uploaded successfully.
+|400 Bad request
+|
+|Incomplete request rejected.
+
+|===
+
+==== Example
+
+===== Request
+
+include::{snippets}/images/post-valid/httpie-request.adoc[]
+
+===== Response
+
+include::{snippets}/images/post-valid/http-response.adoc[]
+
+== Schemas
+
+=== `Image`
+
+[[image_post_schema]]
+==== `POST` request body
+
+include::{snippets}/images/post-valid/request-parts.adoc[]
+
+include::{snippets}/images/post-valid/request-parameters.adoc[]
+
+[[image_schema]]
+==== `POST` & `GET` response body
+
+include::{snippets}/images/post-valid/response-fields.adoc[]
