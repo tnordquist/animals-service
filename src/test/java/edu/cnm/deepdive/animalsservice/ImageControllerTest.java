@@ -3,6 +3,7 @@ package edu.cnm.deepdive.animalsservice;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.cnm.deepdive.animalsservice.service.ImageService;
 import edu.cnm.deepdive.animalsservice.service.LocalFilesystemStorageService;
+import org.h2.util.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +29,7 @@ import static org.hamcrest.core.Is.is;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -87,33 +90,17 @@ class ImageControllerTest {
 
     @Test
     public void whenPostAnimal_thenVerifyStatus() throws Exception {
-        MockMultipartFile file
-                = new MockMultipartFile(
-                "file",
-                "AnimalName.jpeg",
-                MediaType.APPLICATION_JSON_VALUE,
-                "Some sort of animal".getBytes()
-        );
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("title", "AnimalName");
-        mockMvc.perform(
-                        post("/{contextPathPart}/images", contextPathPart)
-                                .contextPath(contextPath)
-                                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                                .content(objectMapper.writeValueAsString(payload))
-//        mockMvc.perform(multipart("/{contextPathPart}/images").file(file))
-                )
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.title", is("AnimalName")))
-                .andDo(
-                        document(
-                                "code/post-valid",
-                                preprocessRequest(prettyPrint()),
-                                preprocessResponse(prettyPrint())
-                        )
-                );
 
+        FileInputStream input = new FileInputStream("/donkey.jpg");
+        MediaType mediaType = new MediaType("multipart", "form-data");
+        MockMultipartFile file = new MockMultipartFile(
+                "image",
+                input);
+
+        mockMvc
+                .perform(
+                        multipart("/images").file(file))
+                .andExpect(status().isOk());
     }
 
     @Test

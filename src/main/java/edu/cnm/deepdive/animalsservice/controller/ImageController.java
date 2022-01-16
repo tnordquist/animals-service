@@ -27,6 +27,7 @@ import edu.cnm.deepdive.animalsservice.view.ImageView;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpHeaders;
@@ -50,16 +51,17 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/images")
 @ExposesResourceFor(Image.class)
+@Profile("service")
 public class ImageController {
 
     public static final String ATTACHMENT_DISPOSITION_FORMAT = "attachment; filename=\"%s\"";
     public static final String IMAGE_NOT_FOUND_REASON = "Image not found";
+    public static final String NOT_RETRIEVED_MESSAGE = "Unable to retrieve previously uploaded file";
     private static final String UUID_PARAMETER_PATTERN = "/{externalKey:[0-9a-fA-F\\-]{32,36}}";
     private static final String DESCRIPTION_PROPERTY_PATTERN =
             UUID_PARAMETER_PATTERN + "/description";
     private static final String CONTENT_PROPERTY_PATTERN =
             ParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/content";
-    public static final String NOT_RETRIEVED_MESSAGE = "Unable to retrieve previously uploaded file";
     private static final String NOT_STORED_MESSAGE = "Unable to store uploaded content";
     private static final String NOT_WHITELISTED_MESSAGE = "Upload MIME type not in whitelist";
     private static final String FILE_STORE_FAILURE_MESSAGE = "File store error";

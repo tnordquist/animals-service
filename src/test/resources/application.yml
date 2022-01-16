@@ -1,21 +1,9 @@
 spring:
-  jackson:
-    deserialization:
-      accept-float-as-int: false
-
-server:
-  servlet:
-    context-path: /animals
-  error:
-    include-message: always
-  forward-headers-strategy: native
-  port: 1861
-
-rest-docs:
-  host: ddc-java.services
-  scheme: https
-
-schedule:
-  cron: "-"
-  zone: UTC
-  stale-code-days: 30
+  profiles:
+    active: service
+  datasource:
+    url: jdbc:h2:file:./db/interviewprep
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update

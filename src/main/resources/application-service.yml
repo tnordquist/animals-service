@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: service
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+
+server:
+  servlet:
+    context-path: /animals
+  error:
+    include-message: always
+  forward-headers-strategy: native
+  port: 1861
+
+rest-docs:
+  host: ddc-java.services
+  scheme: https
+
+schedule:
+  cron: "-"
+  zone: UTC
+  stale-code-days: 30

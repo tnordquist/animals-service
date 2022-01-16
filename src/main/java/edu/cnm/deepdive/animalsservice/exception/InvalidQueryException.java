@@ -1,5 +1,8 @@
 package edu.cnm.deepdive.animalsservice.exception;
 
+import org.springframework.context.annotation.Profile;
+
+@Profile("service")
 public class InvalidQueryException extends IllegalArgumentException{
 
   private static final String DEFAULT_MESSAGE = "Invalid query";

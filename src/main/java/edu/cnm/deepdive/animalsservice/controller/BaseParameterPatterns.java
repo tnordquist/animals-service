@@ -15,9 +15,12 @@
  */
 package edu.cnm.deepdive.animalsservice.controller;
 
+import org.springframework.context.annotation.Profile;
+
 /**
  * Defines common path elements used in multiple REST controller classes.
  */
+@Profile("service")
 public class BaseParameterPatterns {
 
   /** Regex pattern for a UUID in standard form (required by Spring MVC). */
