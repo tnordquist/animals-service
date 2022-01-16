@@ -1,49 +1,11 @@
-#TODO: Split into service, DDL, and preload profiles.
 spring:
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 10MB
-      max-request-size: 15MB
   profiles:
     active: service
   datasource:
-    url: jdbc:h2:file:./db/animals_db
+    url: jdbc:h2:file:./db/animals
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-#    properties:
-#      javax:
-#        persistence:
-#          schema-generation:
-#            create-source: metadata
-#            scripts:
-#              action: create
-#              create-target: ddl.sql
-server:
-  error:
-    include-message: always
-  forward-headers-strategy: native
-  port: 1861
-  servlet:
-    context-path: /animals
 
-upload:
-  applicationHome: true
-  directory: uploads
-  subdirectoryPattern: "^(.{4})(.{2})(.{2}).*$"
-  whitelist:
-    - image/bmp
-    - image/gif
-    - image/jpeg
-    - image/pjpeg
-    - image/png
-    - image/tiff
-    - image/heic
-  filename:
-    format: "%1$s-%2$d.%3$s"
-    randomizerLimit: 1000000
-    timestamp:
-      format: yyyyMMddHHmmssSSS
-      timeZone: UTC
+

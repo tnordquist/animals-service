@@ -4,7 +4,11 @@ spring:
   jackson:
     deserialization:
       accept-float-as-int: false
-
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 15MB
 server:
   servlet:
     context-path: /animals
@@ -21,3 +25,22 @@ schedule:
   cron: "-"
   zone: UTC
   stale-code-days: 30
+
+upload:
+  applicationHome: true
+  directory: uploads
+  subdirectoryPattern: "^(.{4})(.{2})(.{2}).*$"
+  whitelist:
+    - image/bmp
+    - image/gif
+    - image/jpeg
+    - image/pjpeg
+    - image/png
+    - image/tiff
+    - image/heic
+  filename:
+    format: "%1$s-%2$d.%3$s"
+    randomizerLimit: 1000000
+    timestamp:
+      format: yyyyMMddHHmmssSSS
+      timeZone: UTC

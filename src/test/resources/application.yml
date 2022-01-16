@@ -1,8 +1,9 @@
+# TODO add needed yml test configurations
 spring:
   profiles:
     active: service
   datasource:
-    url: jdbc:h2:file:./db/interviewprep
+    url: jdbc:h2:file:./db/animals
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
