@@ -68,3 +68,39 @@ include::{snippets}/images/post-valid/request-parameters.adoc[]
 ==== `POST` & `GET` response body
 
 include::{snippets}/images/post-valid/response-fields.adoc[]
+
+=== Delete an animal
+
+==== Request
+
+`DELETE /images/{id}`
+
+Deletes the animal with the unique identifier `id`.
+
+===== Path parameters
+
+include::{snippets}/images/delete-valid/path-parameters.adoc[]
+
+==== Responses
+
+|===
+|Status|Body|Description
+
+|204 No Content
+|_(none)_
+|Specified code deleted.
+|404 Not Found
+|<<error_schema,`Error`>>
+|No code exists with an `id` equal to the specified `id`.
+
+|===
+
+==== Example
+
+===== Request
+
+include::{snippets}/images/delete-valid/http-request.adoc[]
+
+===== Response
+
+include::{snippets}/images/delete-valid/http-response.adoc[]

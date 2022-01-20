@@ -143,9 +143,9 @@ public class ImageController {
             throws JsonProcessingException {
         String fixedDescription = mapper.readValue(description, String.class);
         return imageService.updateDescription(externalKey, fixedDescription)
-                .map((newDescrition) -> {
+                .map((newDescription) -> {
                     try {
-                        return mapper.writeValueAsString(newDescrition);
+                        return mapper.writeValueAsString(newDescription);
                     } catch (JsonProcessingException e) {
                         throw new IllegalArgumentException(e);
                     }

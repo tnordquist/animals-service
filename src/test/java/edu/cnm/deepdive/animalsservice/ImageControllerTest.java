@@ -30,6 +30,7 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -83,6 +84,43 @@ class ImageControllerTest {
     }
 
     @Test
+    public void postAnimal_invalid() throws Exception {
+
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/koala.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.set("title", "Donkey");
+        mockMvc
+                .perform(
+                        multipart("/images")
+                                .file(file)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .params(params)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.status", is(404)))
+                .andDo(
+                        document(
+                                "images/post-invalid",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                relaxedRequestParts(partWithName("file").description("Image to be uploaded")),
+                                relaxedRequestParameters(getPostParameters()),
+                                relaxedResponseFields(CommonFieldDescriptors.getExceptionFields())
+                        )
+                );
+
+    }
+
+    @Test
     public void postAnimal_valid() throws Exception {
 
         InputStream input = new DefaultResourceLoader()
@@ -120,7 +158,7 @@ class ImageControllerTest {
     }
 
     @Test
-    void getImage_valid() throws Exception {
+    void getAnimal_valid() throws Exception {
         InputStream input = new DefaultResourceLoader()
                 .getResource("images/donkey.jpg")
                 .getInputStream();
@@ -130,7 +168,7 @@ class ImageControllerTest {
                 MediaType.IMAGE_JPEG_VALUE,
                 input
         );
-       Image image = imageService.store(file, "Donkey", "A domesticated ass.");
+        Image image = imageService.store(file, "Donkey", "A domesticated ass.");
         mockMvc.perform(
                         get("/{contextPathPart}/images/{id}", contextPathPart, image.getExternalKey())
                                 .contextPath(contextPath)
@@ -150,11 +188,77 @@ class ImageControllerTest {
     }
 
     @Test
-    void list() {
+    void getAnimal_invalid() throws Exception {
+
+        mockMvc.perform(
+                        get("/{contextPathPart}/images/00000000000000000000000000", contextPathPart)
+                                .contextPath(contextPath)
+                )
+                .andExpect(status().isNotFound())
+                .andDo(
+                        document(
+                                "images/get-invalid"
+                        )
+                );
+    }
+
+
+    @Test
+    void listAnimals_all() throws Exception{
+
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        Image image = imageService.store(file, "Donkey", "A domesticated ass.");
+        imageService.list();
+        mockMvc.perform(
+                get("/{contextPathPart}/images", contextPathPart)
+                        .contextPath(contextPath)
+        )
+                .andExpect(status().isOk());
     }
 
     @Test
-    void delete() {
+    void deleteAnimal_valid() throws Exception {
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        Image image = imageService.store(file, "Donkey", "A domesticated ass.");
+
+        mockMvc.perform(
+                        delete("/{contextPathPart}/images/{id}", contextPathPart, image.getExternalKey())
+                                .contextPath(contextPath)
+                )
+                .andExpect(status().isNoContent())
+                .andDo(
+                        document(
+                                "images/delete-valid",
+                                pathParameters(getPathVariables())
+                        )
+                );
+    }
+
+    @Test
+    void deleteAnimal_invalid() throws Exception {
+
+        mockMvc.perform(
+                        delete("/{contextPathPart}/images/000000000000000000000000000", contextPathPart)
+                                .contextPath(contextPath)
+                )
+                .andExpect(status().isNotFound())
+                .andDo(document("images/delete-invalid"));
     }
 
     @Test
@@ -188,9 +292,9 @@ class ImageControllerTest {
 
     private List<FieldDescriptor> getImageFields() {
         return List.of(
-          fieldWithPath("id")
-                  .type(JsonFieldType.STRING)
-                  .description("Unique identifier of image."),
+                fieldWithPath("id")
+                        .type(JsonFieldType.STRING)
+                        .description("Unique identifier of image."),
                 fieldWithPath("href")
                         .type(JsonFieldType.STRING)
                         .description("Resource URL of image."),
