@@ -38,7 +38,7 @@ TODO write description here
 |<<image_schema, `Image`>>
 |Image uploaded successfully.
 |400 Bad request
-|
+||<<error_schema,`Error`>>
 |Incomplete request rejected.
 
 |===
@@ -68,6 +68,41 @@ include::{snippets}/images/post-valid/request-parameters.adoc[]
 ==== `POST` & `GET` response body
 
 include::{snippets}/images/post-valid/response-fields.adoc[]
+
+=== List codes
+
+==== Request
+
+`GET /images`
+
+Returns a list of currently stored animals.
+
+===== Query parameters
+
+include::{snippets}/images/list-all/request-parameters.adoc[]
+
+==== Responses
+
+|===
+|Status|Body|Description
+
+|200 OK
+|<<image_schema,`Image`>>
+|Expected count of animal objects returned successfully.
+|400 Bad Request
+|<<error_schema,`Error`>>
+|Invalid `status` query parameter value.
+
+|===
+
+===== Request
+
+include::{snippets}/images/list-all/http-request.adoc[]
+
+===== Response
+
+include::{snippets}/images/list-all/http-response.adoc[]
+
 
 === Delete an animal
 
@@ -104,3 +139,6 @@ include::{snippets}/images/delete-valid/http-request.adoc[]
 ===== Response
 
 include::{snippets}/images/delete-valid/http-response.adoc[]
+
+[[error_schema]]
+=== `Error`
