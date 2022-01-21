@@ -73,13 +73,10 @@ include::{snippets}/images/post-valid/response-fields.adoc[]
 
 ==== Request
 
+
 `GET /images`
 
 Returns a list of currently stored animals.
-
-===== Query parameters
-
-include::{snippets}/images/list-all/request-parameters.adoc[]
 
 ==== Responses
 
@@ -91,16 +88,23 @@ include::{snippets}/images/list-all/request-parameters.adoc[]
 |Expected count of animal objects returned successfully.
 |400 Bad Request
 |<<error_schema,`Error`>>
-|Invalid `status` query parameter value.
+|Incorrect count of list of animals.
 
 |===
 
+==== Example
+
 ===== Request
+
+[[image_list_schema]]
+==== `GET` request body
 
 include::{snippets}/images/list-all/http-request.adoc[]
 
 ===== Response
 
+[[image_list_schema]]
+==== `GET` response body
 include::{snippets}/images/list-all/http-response.adoc[]
 
 
