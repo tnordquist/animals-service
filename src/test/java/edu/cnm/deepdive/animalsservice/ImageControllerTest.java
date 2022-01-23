@@ -332,7 +332,7 @@ class ImageControllerTest {
     }
 
     @Test
-    void getDescription() throws Exception {
+    void getDescription_valid() throws Exception {
 
         InputStream input = new DefaultResourceLoader()
                 .getResource("images/donkey.jpg")
@@ -345,18 +345,19 @@ class ImageControllerTest {
         );
         Image image = imageService.store(file, "Donkey", "A domesticated ass.");
         mockMvc.perform(
-                        get("/{contextPathPart}/images/{id}/description", contextPathPart, image.getExternalKey())
+                        get("/{contextPathPart}/images/{id}/description", contextPathPart,
+                                image.getExternalKey())
                                 .contextPath(contextPath)
-                                .contentType(MediaType.APPLICATION_JSON_VALUE)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.description", is("A domesticated ass.")))
+                .andExpect(jsonPath("$", is("A domesticated ass.")))
                 .andDo(
                         document(
                                 "images/get-valid",
+                                preprocessRequest(prettyPrint()),
                                 preprocessResponse(prettyPrint()),
-                                pathParameters(getPathVariables()),
-                                relaxedResponseFields(getImageFields())
+                                pathParameters(getPathVariables())
+
                         )
                 );
     }
@@ -374,20 +375,23 @@ class ImageControllerTest {
                 input
         );
         Image image = imageService.store(file, "Donkey", "A wild ass.");
+        String newDescription = "A new description";
         mockMvc.perform(
-                        put("/{contextPathPart}/images/{id}/description", contextPathPart, image.getExternalKey())
+                        put("/{contextPathPart}/images/{id}/description", contextPathPart,
+                                image.getExternalKey())
                                 .contextPath(contextPath)
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
-                                .content(objectMapper.writeValueAsString("A domesticated ass."))
+                                .content(objectMapper.writeValueAsString(newDescription))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.description", is("A domesticated ass.")))
+                .andExpect(jsonPath("$", is(newDescription)))
                 .andDo(
                         document(
                                 "images/put-valid",
+                                preprocessRequest(prettyPrint()),
                                 preprocessResponse(prettyPrint()),
-                                pathParameters(getPathVariables()),
-                                relaxedResponseFields(getImageFields()))
+                                pathParameters(getPathVariables())
+                        )
                 );
     }
 
