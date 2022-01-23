@@ -362,7 +362,7 @@ class ImageControllerTest {
     }
 
     @Test
-    void putDescription() throws Exception {
+    void putDescription_valid() throws Exception {
 
         InputStream input = new DefaultResourceLoader()
                 .getResource("images/donkey.jpg")
@@ -374,15 +374,13 @@ class ImageControllerTest {
                 input
         );
         Image image = imageService.store(file, "Donkey", "A wild ass.");
-        image = imageService.updateDescription(image.getExternalKey(), "A domesticated ass.").orElseThrow();
         mockMvc.perform(
-                        put("/{contextPathPart}/images/{id}/description}", contextPathPart, image.getExternalKey())
+                        put("/{contextPathPart}/images/{id}/description", contextPathPart, image.getExternalKey())
                                 .contextPath(contextPath)
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString("A domesticated ass."))
                 )
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Location"))
-  //              .andExpect(MockMvcResultMatchers.content().string("A domesticated ass."))
                 .andExpect(jsonPath("$.description", is("A domesticated ass.")))
                 .andDo(
                         document(
