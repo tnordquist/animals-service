@@ -1,5 +1,6 @@
 package edu.cnm.deepdive.animalsservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.cnm.deepdive.animalsservice.model.entity.Image;
 import edu.cnm.deepdive.animalsservice.service.ImageService;
 import org.junit.jupiter.api.AfterEach;
@@ -47,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ImageControllerTest {
 
     private final ImageService imageService;
+    private final ObjectMapper objectMapper;
 
     @Value("${rest-docs.scheme}")
     private String docScheme;
@@ -61,8 +63,9 @@ class ImageControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    ImageControllerTest(ImageService imageService) {
+    ImageControllerTest(ImageService imageService, ObjectMapper objectMapper) {
         this.imageService = imageService;
+        this.objectMapper = objectMapper;
     }
 
     @BeforeEach
@@ -329,7 +332,33 @@ class ImageControllerTest {
     }
 
     @Test
-    void getDescription() {
+    void getDescription() throws Exception {
+
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        Image image = imageService.store(file, "Donkey", "A domesticated ass.");
+        mockMvc.perform(
+                        get("/{contextPathPart}/images/{id}/description", contextPathPart, image.getExternalKey())
+                                .contextPath(contextPath)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.description", is("A domesticated ass.")))
+                .andDo(
+                        document(
+                                "images/get-valid",
+                                preprocessResponse(prettyPrint()),
+                                pathParameters(getPathVariables()),
+                                relaxedResponseFields(getImageFields())
+                        )
+                );
     }
 
     @Test
@@ -345,16 +374,16 @@ class ImageControllerTest {
                 input
         );
         Image image = imageService.store(file, "Donkey", "A wild ass.");
-        imageService.updateDescription(image.getExternalKey(), "A domesticated ass.");
+        image = imageService.updateDescription(image.getExternalKey(), "A domesticated ass.").orElseThrow();
         mockMvc.perform(
                         put("/{contextPathPart}/images/{id}/description}", contextPathPart, image.getExternalKey())
                                 .contextPath(contextPath)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
                 )
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Location"))
+  //              .andExpect(MockMvcResultMatchers.content().string("A domesticated ass."))
                 .andExpect(jsonPath("$.description", is("A domesticated ass.")))
-//                .andExpect(MockMvcResultMatchers.content()
-//                        .string("A domesticated ass."))
                 .andDo(
                         document(
                                 "images/put-valid",

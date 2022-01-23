@@ -26,6 +26,7 @@ import edu.cnm.deepdive.animalsservice.view.ImageView;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -133,7 +134,12 @@ public class ImageController {
             MediaType.APPLICATION_JSON_VALUE})
     public String getDescription(@PathVariable UUID externalKey) {
         return imageService.get(externalKey)
-                .map(Image::getDescription)
+                .map(new Function<Image, String>() {
+                    @Override
+                    public String apply(Image image) {
+                        return image.getDescription();
+                    }
+                })
                 .orElseThrow(NotFoundException::new);
     }
 
