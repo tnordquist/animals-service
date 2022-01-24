@@ -8,6 +8,12 @@ v{projectVersion}
 :toclevels: 3
 :sectlinks:
 
+[[animals_overview]]
+== What is _Animals_?
+
+_Animals_ is implemented as a simple RESTful service that permits clients (consumers of the service) to create and retrieve images. A title and optional description are part of the Image.
+
+
 == Service endpoints
 
 [[post_image_endpoint]]
@@ -53,23 +59,9 @@ include::{snippets}/images/post-valid/httpie-request.adoc[]
 
 include::{snippets}/images/post-valid/http-response.adoc[]
 
-== Schemas
 
-=== `Image`
 
-[[image_post_schema]]
-==== `POST` request body
-
-include::{snippets}/images/post-valid/request-parts.adoc[]
-
-include::{snippets}/images/post-valid/request-parameters.adoc[]
-
-[[image_schema]]
-==== `POST` & `GET` response body
-
-include::{snippets}/images/post-valid/response-fields.adoc[]
-
-=== List codes
+=== List images
 
 ==== Request
 
@@ -143,6 +135,22 @@ include::{snippets}/images/delete-valid/http-request.adoc[]
 ===== Response
 
 include::{snippets}/images/delete-valid/http-response.adoc[]
+
+== Schemas
+
+=== `Image`
+
+[[image_post_schema]]
+==== `POST` request body
+
+include::{snippets}/images/post-valid/request-parts.adoc[]
+
+include::{snippets}/images/post-valid/request-parameters.adoc[]
+
+[[image_schema]]
+==== `POST` & `GET` response body
+
+include::{snippets}/images/post-valid/response-fields.adoc[]
 
 [[error_schema]]
 === `Error`

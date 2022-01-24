@@ -20,6 +20,7 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.restdocs.request.ParameterDescriptor;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,6 +28,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -37,8 +39,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.relaxedResponseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -89,42 +90,6 @@ class ImageControllerTest {
                   RestDocumentationContextProvider restDocumentation) {
     }
 
-/*    @Test
-    public void postAnimal_invalid() throws Exception {
-
-        InputStream input = new DefaultResourceLoader()
-                .getResource("images/donkey.jpg")
-                .getInputStream();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "donkey.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                input
-        );
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.set("titl", "Dog");
-        mockMvc
-                .perform(
-                        multipart("/images")
-                                .file(file)
-                                .contentType(MediaType.MULTIPART_FORM_DATA)
-                                .params(params)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(header().doesNotExist("Location"))
-                .andExpect(jsonPath("$.title", is(400)))
-                .andDo(
-                        document(
-                                "images/post-invalid",
-                                preprocessRequest(prettyPrint()),
-                                preprocessResponse(prettyPrint()),
-                                relaxedRequestParts(partWithName("file").description("Image to be uploaded")),
-                                relaxedRequestParameters(getPostParameters()),
-                                relaxedResponseFields(CommonFieldDescriptors.getExceptionFields())
-                        )
-                );
-
-    }*/
 
     @Test
     public void postAnimal_valid() throws Exception {
@@ -163,6 +128,41 @@ class ImageControllerTest {
 
     }
 
+    /*@Test
+    public void postAnimal_invalid() throws Exception {
+
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.set("titl", "Dog");
+        mockMvc
+                .perform(
+                        multipart("/images")
+                                .file(file)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .params(params)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(jsonPath("$.title", is(400)))
+                .andDo(
+                        document(
+                                "images/post-invalid",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                relaxedRequestParameters(getPostParameters()),
+                                relaxedResponseFields(CommonFieldDescriptors.getExceptionFields())
+                        )
+                );
+
+    }*/
 
     @Test
     void getAnimal_valid() throws Exception {
@@ -238,6 +238,7 @@ class ImageControllerTest {
         mockMvc.perform(
                         get("/{contextPathPart}/images", contextPathPart)
                                 .contextPath(contextPath)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
                 )
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2)
@@ -252,7 +253,7 @@ class ImageControllerTest {
                 );
     }
 
-/*    @Test
+    @Test
     void listAnimals_invalid() throws Exception {
 
         InputStream input = new DefaultResourceLoader()
@@ -278,12 +279,10 @@ class ImageControllerTest {
         imageService.store(file, "Green Frog", "A green frog commonly found in Virginia.");
 
         mockMvc.perform(
-                        get("/{contextPathPart}/images", contextPathPart)
+                        get("/{contextPathPart}/image", contextPathPart)
                                 .contextPath(contextPath)
                 )
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2)
-                )
+                .andExpect(status().isNotFound())
                 .andDo(
                         document(
                                 "images/list-all",
@@ -292,7 +291,7 @@ class ImageControllerTest {
                                 relaxedRequestParameters(getQueryParameters())
                         )
                 );
-    }*/
+    }
 
     @Test
     void deleteAnimal_valid() throws Exception {
@@ -395,8 +394,66 @@ class ImageControllerTest {
                 );
     }
 
+   /* @Test
+    void putDescription_invalid() throws Exception {
+
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        Image image = imageService.store(file, "Donkey", "A wild ass.");
+        String newDescription = "A new description";
+        mockMvc.perform(
+                        put("/{contextPathPart}/images/{id}/description", contextPathPart,
+                                image.getExternalKey())
+                                .contextPath(contextPath)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(objectMapper.writeValueAsString(newDescription))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(newDescription)))
+                .andDo(
+                        document(
+                                "images/put-valid",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                pathParameters(getPathVariables())
+                        )
+                );
+    }*/
+
     @Test
-    void getContent() {
+    void getContent_valid() throws Exception {
+
+        InputStream input = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg")
+                .getInputStream();
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "donkey.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                input
+        );
+        Image image = imageService.store(file, "Donkey", "A domesticated ass.");
+        mockMvc.perform(
+                        get("/{contextPathPart}/images/{id}/content", contextPathPart, image.getExternalKey())
+                                .contextPath(contextPath)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_JPEG_VALUE))
+                .andDo(
+                        document(
+                                "images/getContent-valid",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                pathParameters(getPathVariables())
+                        )
+                );
     }
 
     private List<ParameterDescriptor> getPathVariables() {
