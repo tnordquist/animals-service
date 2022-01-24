@@ -85,8 +85,8 @@ public class ImageController {
             @RequestParam(required = false) String description
     ) {
         try {
-            Image image = imageService.store(file, title, description);
 
+            Image image = imageService.store(file, title, description);
             return ResponseEntity.created(image.getHref()).body(image);
         } catch (IOException e) {
             throw new ResponseStatusException(

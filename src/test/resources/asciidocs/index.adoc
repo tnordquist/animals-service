@@ -11,8 +11,7 @@ v{projectVersion}
 [[animals_overview]]
 == What is _Animals_?
 
-_Animals_ is implemented as a simple RESTful service that permits clients (consumers of the service) to create and retrieve images. A title and optional description are part of the Image.
-
+_Animals_ is a simple RESTful service that permits clients (consumers of the service) to create and retrieve images. A title and optional description are part of the Image.
 
 == Service endpoints
 
@@ -59,12 +58,9 @@ include::{snippets}/images/post-valid/httpie-request.adoc[]
 
 include::{snippets}/images/post-valid/http-response.adoc[]
 
-
-
 === List images
 
 ==== Request
-
 
 `GET /images`
 
@@ -99,14 +95,21 @@ include::{snippets}/images/list-all/http-request.adoc[]
 ==== `GET` response body
 include::{snippets}/images/list-all/http-response.adoc[]
 
+=== Modify image information
 
-=== Delete an animal
+==== Request
+
+`PUT /images`
+
+Returns a list of currently stored animals.
+
+=== Delete an image
 
 ==== Request
 
 `DELETE /images/{id}`
 
-Deletes the animal with the unique identifier `id`.
+Deletes the image with the unique identifier `id`.
 
 ===== Path parameters
 

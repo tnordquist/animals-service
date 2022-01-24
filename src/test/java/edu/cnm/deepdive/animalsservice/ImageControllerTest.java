@@ -128,7 +128,7 @@ class ImageControllerTest {
 
     }
 
-    /*@Test
+   /* @Test
     public void postAnimal_invalid() throws Exception {
 
         InputStream input = new DefaultResourceLoader()
@@ -142,6 +142,7 @@ class ImageControllerTest {
         );
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.set("titl", "Dog");
+
         mockMvc
                 .perform(
                         multipart("/images")
