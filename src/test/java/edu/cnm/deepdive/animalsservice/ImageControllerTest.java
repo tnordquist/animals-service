@@ -10,9 +10,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.restdocs.RestDocumentationContext;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.payload.FieldDescriptor;
@@ -20,6 +23,8 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.restdocs.request.ParameterDescriptor;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultHandler;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -27,12 +32,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
+import static com.fasterxml.jackson.databind.type.LogicalType.Map;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -128,7 +138,7 @@ class ImageControllerTest {
 
     }
 
-   /* @Test
+    @Test
     public void postAnimal_invalid() throws Exception {
 
         InputStream input = new DefaultResourceLoader()
@@ -140,6 +150,7 @@ class ImageControllerTest {
                 MediaType.IMAGE_JPEG_VALUE,
                 input
         );
+
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.set("titl", "Dog");
 
@@ -152,18 +163,15 @@ class ImageControllerTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(header().doesNotExist("Location"))
-                .andExpect(jsonPath("$.title", is(400)))
                 .andDo(
                         document(
                                 "images/post-invalid",
                                 preprocessRequest(prettyPrint()),
-                                preprocessResponse(prettyPrint()),
-                                relaxedRequestParameters(getPostParameters()),
-                                relaxedResponseFields(CommonFieldDescriptors.getExceptionFields())
+                                preprocessResponse(prettyPrint())
                         )
                 );
 
-    }*/
+    }
 
     @Test
     void getAnimal_valid() throws Exception {
@@ -431,30 +439,47 @@ class ImageControllerTest {
     @Test
     void getContent_valid() throws Exception {
 
-        InputStream input = new DefaultResourceLoader()
-                .getResource("images/donkey.jpg")
-                .getInputStream();
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "donkey.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                input
-        );
-        Image image = imageService.store(file, "Donkey", "A domesticated ass.");
-        mockMvc.perform(
-                        get("/{contextPathPart}/images/{id}/content", contextPathPart, image.getExternalKey())
-                                .contextPath(contextPath)
-                )
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.IMAGE_JPEG_VALUE))
-                .andDo(
-                        document(
-                                "images/getContent-valid",
-                                preprocessRequest(prettyPrint()),
-                                preprocessResponse(prettyPrint()),
-                                pathParameters(getPathVariables())
-                        )
-                );
+        Resource resource = new DefaultResourceLoader()
+                .getResource("images/donkey.jpg");
+        try (
+                InputStream input = resource.getInputStream();
+                InputStream checkStream = resource.getInputStream();
+        ) {
+
+            MockMultipartFile file = new MockMultipartFile(
+                    "file",
+                    "donkey.jpg",
+                    MediaType.IMAGE_JPEG_VALUE,
+                    input
+            );
+            Image image = imageService.store(file, "Donkey", "A domesticated ass.");
+
+            byte[] checkContents = new byte[(int) resource.contentLength()];
+            checkStream.read(checkContents);
+            mockMvc.perform(
+                            get("/{contextPathPart}/images/{id}/content", contextPathPart, image.getExternalKey())
+                                    .contextPath(contextPath)
+                    )
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.IMAGE_JPEG_VALUE))
+                    .andExpect(content().bytes(checkContents))
+                    .andDo(
+                            document(
+                                    "images/content-valid",
+                                    preprocessRequest(prettyPrint()),
+                                    pathParameters(getPathVariables()),
+                                    (operation) -> {
+                                        Map<String, Object> attributes = operation.getAttributes();
+                                        RestDocumentationContext docContext = (RestDocumentationContext) attributes
+                                                .get("org.springframework.restdocs.RestDocumentationContext");
+                                        Path output = Path.of(docContext.getOutputDirectory().toString(), operation.getName(), "donkey.jpg");
+                                        output.toFile().delete();
+                                        Files.copy(new ByteArrayResource(operation.getResponse().getContent()).getInputStream(), output);
+                                        System.out.println(attributes);
+                                    }
+                            )
+                    );
+        }
     }
 
     private List<ParameterDescriptor> getPathVariables() {

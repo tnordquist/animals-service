@@ -95,6 +95,10 @@ include::{snippets}/images/list-all/http-request.adoc[]
 ==== `GET` response body
 include::{snippets}/images/list-all/http-response.adoc[]
 
+[#get-response-image]
+.Response Body Image
+image::{snippets}/images/content-valid/donkey.jpg["response body image",400]
+
 === Modify image information
 
 ==== Request
